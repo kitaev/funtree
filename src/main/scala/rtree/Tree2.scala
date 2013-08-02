@@ -1,10 +1,10 @@
 package rtree
 
-class Tree2(val strategy: TreeStrategy2) extends TreeStrategy2 {
+class Tree2[P](val strategy: TreeStrategy2[P]) extends TreeStrategy2[P] {
 
-  var root: Node2 = createNode(new Array[WithPayload](0))
+  var root: Node2[P] = createNode(new Array[WithPayload[P]](0))
 
-  def insert(leaf: WithPayload): Node2 = {
+  def insert(leaf: WithPayload[P]): Node2[P] = {
     root.insert(leaf) match {
       case Some(roots) => {
         val seq = roots.map(createNode(_))
@@ -15,69 +15,62 @@ class Tree2(val strategy: TreeStrategy2) extends TreeStrategy2 {
     root
   }
 
-  def createNode(children: Seq[_ <: WithPayload]): Node2 = {
-    if (children.isEmpty || children.find(_.isInstanceOf[Node2]) == None) {
-      new LeafNode(this, children)
+  def createNode(children: Seq[_ <: WithPayload[P]]): Node2[P] = {
+    if (children.isEmpty || children.find(_.isInstanceOf[Node2[P]]) == None) {
+      new LeafNode[P](this, children)
     } else {
-      new ContainerNode2(this, children)
+      new ContainerNode2[P](this, children)
     }
   }
 
-  def split(nodes: Seq[_ <: WithPayload]): Option[Seq[Seq[_ <: WithPayload]]] = {
+  def split(nodes: Seq[_ <: WithPayload[P]]): Option[Seq[Seq[_ <: WithPayload[P]]]] = {
     strategy.split(nodes)
   }
 
-  def findTarget(payload: Payload, targets: Seq[_ <: WithPayload]): Int = {
+  def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]): Int = {
     strategy.findTarget(payload, targets)
   }
   
-  def combinePayload(nodes: Seq[_ <: WithPayload]) : Payload = {
+  def combinePayload(nodes: Seq[_ <: WithPayload[P]]) : P = {
     strategy.combinePayload(nodes)
     //nodes.foldLeft[Option[Payload]](None)((acc, c) => Some(c.payload + acc.orNull)).orNull
   }
 }
 
-trait TreeStrategy2 {
-  def split(nodes: Seq[_ <: WithPayload]): Option[Seq[Seq[_ <: WithPayload]]]
-  def findTarget(payload: Payload, targets: Seq[_ <: WithPayload]): Int
-  def combinePayload(nodes: Seq[_ <: WithPayload]) : Payload
+trait TreeStrategy2[P] {
+  def split(nodes: Seq[_ <: WithPayload[P]]): Option[Seq[Seq[_ <: WithPayload[P]]]]
+  def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]): Int
+  def combinePayload(nodes: Seq[_ <: WithPayload[P]]) : P
   
 }
 
-trait Payload
-
-trait WithPayload {
-  def payload: Payload
+trait WithPayload[P] {
+  def payload: P
 }
 
-class EmptyNodeException extends Exception
+abstract class Node2[P](val tree: Tree2[P], var children: Seq[_ <: WithPayload[P]] = new Array[WithPayload[P]](0)) extends WithPayload[P] {
+  def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]]
 
-abstract class Node2(val tree: Tree2, var children: Seq[_ <: WithPayload] = new Array[WithPayload](0)) extends WithPayload {
-  def insert(l: WithPayload): Option[Seq[Seq[_ <: WithPayload]]]
-
-  def payload: Payload = {
-    if (children.isEmpty) {
-      throw new EmptyNodeException
-    }
+  def payload: P = {
     tree.combinePayload(children);    
   }
 }
 
-class LeafNode(tree: Tree2, readyChildren: Seq[_ <: WithPayload] = new Array[WithPayload](0)) extends Node2(tree, readyChildren) {
+class LeafNode[P](tree: Tree2[P], readyChildren: Seq[_ <: WithPayload[P]] = new Array[WithPayload[P]](0)) extends Node2(tree, readyChildren) {
 
-  def insert(l: WithPayload): Option[Seq[Seq[_ <: WithPayload]]] = {
+  def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]] = {
     children = children :+ l
     tree.split(children)
   }
 }
 
-class ContainerNode2(tree: Tree2, readyChildren: Seq[_ <: WithPayload] = new Array[WithPayload](0)) extends Node2(tree, readyChildren) {
+class ContainerNode2[P](tree: Tree2[P], readyChildren: Seq[_ <: WithPayload[P]] = new Array[WithPayload[P]](0)) extends Node2(tree, readyChildren) {
 
-  override def insert(l: WithPayload): Option[Seq[Seq[_ <: WithPayload]]] = {
+  override def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]] = {
     val targetIndex = tree.findTarget(l.payload, children)
 
     val replacement = children(targetIndex) match {
-      case n: Node2 => n.insert(l)
+      case n: Node2[P] => n.insert(l)
       case _ => None
     }
     replacement match {
