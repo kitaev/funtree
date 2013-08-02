@@ -1,8 +1,8 @@
-package rtree
+package map.base
 
 import org.scalatest.FlatSpec
 
-class Tree2Test extends FlatSpec {
+class ShapeTreeTest extends FlatSpec {
 
   class ShapeItem(val id: Long, val payload: Shape) extends WithPayload[Shape] {
     override def toString = id + " : " + payload
@@ -17,12 +17,12 @@ class Tree2Test extends FlatSpec {
     }
   }
 
-  class ShapeStrategy extends TreeStrategy[Shape] {
+  class BinaryShapeTreeStrategy extends ShapeTreeStrategy {
     
     def split(nodes: Seq[_ <: WithPayload[Shape]]): Option[Seq[Seq[_ <: WithPayload[Shape]]]] = {
       if (nodes.length > 2) {
-        val a2: Seq[WithPayload[Shape]] = Array[WithPayload[Shape]](nodes(0), nodes(1))
-        val a1: Seq[WithPayload[Shape]] = Array[WithPayload[Shape]](nodes(2))
+        val a2: Seq[WithPayload[Shape]] = Array(nodes(0), nodes(1))
+        val a1: Seq[WithPayload[Shape]] = Array(nodes(2))
         new Some(Array(a1, a2))
       } else {
         None
@@ -35,19 +35,10 @@ class Tree2Test extends FlatSpec {
         case Some(x) => targets.indexOf(x)
       }
     }
-
-    def combinePayload(nodes: Seq[_ <: WithPayload[Shape]]): Shape = {
-      if (nodes.isEmpty) {
-        throw new EmptyNodeException
-      }
-      nodes.foldLeft[Option[Shape]](None)((acc, c) => Some(c.payload + acc.orNull)).orNull
-    }
-
   }
 
-  "Tree2" should "work" in {
-    val strategy = new ShapeStrategy
-    val tree = new Tree[Shape](strategy)
+  "ShapeTree" should "work" in {
+    val tree = new ShapeTree(new BinaryShapeTreeStrategy)
 
     tree.insert(ShapeItem(Shape(0, 0)));
     tree.insert(ShapeItem(Shape(1, 1)));

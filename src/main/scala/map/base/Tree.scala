@@ -1,4 +1,4 @@
-package rtree
+package map.base
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -53,7 +53,6 @@ trait TreeStrategy[P] {
   def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]): Int
   def combinePayload(nodes: Seq[_ <: WithPayload[P]]): P
 }
-
 
 trait WithPayload[P] {
   def payload: P

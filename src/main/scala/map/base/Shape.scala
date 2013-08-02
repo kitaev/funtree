@@ -1,4 +1,4 @@
-package rtree
+package map.base
 
 object Shape {
   def apply(x : Double, y : Double) : Shape = {

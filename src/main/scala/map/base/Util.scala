@@ -1,4 +1,4 @@
-package rtree;
+package map.base;
 
 trait Cache[T] {
 

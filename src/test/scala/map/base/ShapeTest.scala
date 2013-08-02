@@ -1,6 +1,6 @@
-package rtree
+package map.base
 
-import org.scalatest._
+import org.scalatest.FlatSpec
 
 class ShapeTest extends FlatSpec {
   
