@@ -20,7 +20,7 @@ class ShapeTreeTest extends FlatSpec {
 
   class BinaryShapeTreeStrategy extends ShapeTreeStrategy {
     
-    def split(nodes: Seq[_ <: WithPayload[Shape]]): Option[Seq[Seq[_ <: WithPayload[Shape]]]] = {
+    def split(nodes: Seq[_ <: WithPayload[Shape]]) = {
       nodes.length match {
         case 3 => {
 	        val right: Seq[WithPayload[Shape]] = Array(nodes(0), nodes(1))
@@ -31,7 +31,7 @@ class ShapeTreeTest extends FlatSpec {
       }
     }
     
-    def findTarget(payload: Shape, targets: Seq[_ <: WithPayload[Shape]]): Int = {
+    def findTarget(payload: Shape, targets: Seq[_ <: WithPayload[Shape]]) = {
       targets.find(_.payload.contains(payload)) match {
         case Some(x) => targets.indexOf(x)
         case None => 0
@@ -40,7 +40,7 @@ class ShapeTreeTest extends FlatSpec {
   }
 
   "ShapeTree" should "work" in {
-    val tree = new ShapeTree(new BinaryShapeTreeStrategy)
+    val tree = new ShapeTree(new ShapeRTreeStrategy(4))
 
     tree.insert(ShapeItem(Shape(0, 0)));
     tree.insert(ShapeItem(Shape(1, 1)));

@@ -25,6 +25,8 @@ abstract class Shape {
   }
 
   def expand(that: Shape): Shape
+  
+  def area : Double
 }
 
 object Point {
@@ -45,6 +47,8 @@ class Point(val x: Double = 0, val y: Double = 0) extends Shape {
       case r: Rect => r.expand(this)
     }
   }
+  
+  def area = 0.0
 
   override def equals(that: Any) = {
     that match {
@@ -86,6 +90,8 @@ class Rect(p0 : Point, p1 : Point) extends Shape {
       case p: Point => Rect(topleft.x.min(p.x), topleft.y.max(p.y), bottomright.x.max(p.x), bottomright.y.min(p.y))
     }
   }
+
+  def area = {((bottomright.x - topleft.x) * (topleft.y - bottomright.y)).abs}
 
   override def equals(that: Any) = {
     that match {

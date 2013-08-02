@@ -27,15 +27,15 @@ class Tree[P](val strategy: TreeStrategy[P]) extends TreeStrategy[P] {
     }
   }
 
-  def split(nodes: Seq[_ <: WithPayload[P]]): Option[Seq[Seq[_ <: WithPayload[P]]]] = {
+  def split(nodes: Seq[_ <: WithPayload[P]]) = {
     strategy.split(nodes)
   }
 
-  def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]): Int = {
+  def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]) = {
     strategy.findTarget(payload, targets)
   }
 
-  def combinePayload(nodes: Seq[_ <: WithPayload[P]]): P = {
+  def combinePayload(nodes: Seq[_ <: WithPayload[P]]) = {
     strategy.combinePayload(nodes)
   }
 
