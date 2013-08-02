@@ -17,7 +17,7 @@ class Tree2Test extends FlatSpec {
     }
   }
 
-  class ShapeStrategy extends TreeStrategy2[Shape] {
+  class ShapeStrategy extends TreeStrategy[Shape] {
     
     def split(nodes: Seq[_ <: WithPayload[Shape]]): Option[Seq[Seq[_ <: WithPayload[Shape]]]] = {
       if (nodes.length > 2) {
@@ -47,7 +47,7 @@ class Tree2Test extends FlatSpec {
 
   "Tree2" should "work" in {
     val strategy = new ShapeStrategy
-    val tree = new Tree2[Shape](strategy)
+    val tree = new Tree[Shape](strategy)
 
     tree.insert(ShapeItem(Shape(0, 0)));
     tree.insert(ShapeItem(Shape(1, 1)));
