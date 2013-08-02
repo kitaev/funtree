@@ -61,7 +61,7 @@ trait WithPayload[P] {
 
   def payload: P = {
     if (cachedPayload == None) {
-      cachedPayload = new Some(computePayload())
+      cachedPayload = Some(computePayload())
     }
     cachedPayload.get
   }
