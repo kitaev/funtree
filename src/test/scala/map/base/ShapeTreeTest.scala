@@ -4,8 +4,9 @@ import org.scalatest.FlatSpec
 
 class ShapeTreeTest extends FlatSpec {
 
-  class ShapeItem(val id: Long, val payload: Shape) extends WithPayload[Shape] {
+  class ShapeItem(val id: Long, override val payload: Shape) extends WithPayload[Shape] {
     override def toString = id + " : " + payload
+    def computePayload() = payload
   }
   
   object ShapeItem {

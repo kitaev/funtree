@@ -55,13 +55,24 @@ trait TreeStrategy[P] {
 }
 
 trait WithPayload[P] {
-  def payload: P
+  var cachedPayload : Option[P] = None
+  
+  def computePayload() : P
+
+  def payload: P = {
+    if (cachedPayload == None) {
+      cachedPayload = new Some(computePayload())
+    }
+    cachedPayload.get
+  }
+  
+  protected def dropCache() = cachedPayload = None
 }
 
 abstract class Node[P](val tree: Tree[P], var children: Seq[_ <: WithPayload[P]] = new Array[WithPayload[P]](0)) extends WithPayload[P] {
   def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]]
 
-  def payload: P = {
+  def computePayload: P = {
     tree.combinePayload(children);
   }
   
@@ -77,6 +88,7 @@ abstract class Node[P](val tree: Tree[P], var children: Seq[_ <: WithPayload[P]]
 class LeafNode[P](tree: Tree[P], readyChildren: Seq[_ <: WithPayload[P]] = new Array[WithPayload[P]](0)) extends Node(tree, readyChildren) {
 
   def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]] = {
+    dropCache()
     children = children :+ l
     tree.split(children)
   }
@@ -90,6 +102,7 @@ class LeafNode[P](tree: Tree[P], readyChildren: Seq[_ <: WithPayload[P]] = new A
 class ContainerNode[P](tree: Tree[P], readyChildren: Seq[_ <: WithPayload[P]] = new Array[WithPayload[P]](0)) extends Node(tree, readyChildren) {
 
   override def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]] = {
+    dropCache()
     val targetIndex = tree.findTarget(l.payload, children)
 
     val replacement = children(targetIndex) match {
