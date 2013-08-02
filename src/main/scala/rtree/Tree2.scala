@@ -1,5 +1,7 @@
 package rtree
 
+import scala.collection.mutable.ArrayBuffer
+
 class Tree2[P](val strategy: TreeStrategy2[P]) extends TreeStrategy2[P] {
 
   var root: Node2[P] = createNode(new Array[WithPayload[P]](0))
@@ -10,10 +12,12 @@ class Tree2[P](val strategy: TreeStrategy2[P]) extends TreeStrategy2[P] {
         val seq = roots.map(createNode(_))
         root = createNode(seq)
       }
-      case None => 
+      case None =>
     }
     root
   }
+  
+  def payload : P = root.payload
 
   def createNode(children: Seq[_ <: WithPayload[P]]): Node2[P] = {
     if (children.isEmpty || children.find(_.isInstanceOf[Node2[P]]) == None) {
@@ -30,19 +34,26 @@ class Tree2[P](val strategy: TreeStrategy2[P]) extends TreeStrategy2[P] {
   def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]): Int = {
     strategy.findTarget(payload, targets)
   }
-  
-  def combinePayload(nodes: Seq[_ <: WithPayload[P]]) : P = {
+
+  def combinePayload(nodes: Seq[_ <: WithPayload[P]]): P = {
     strategy.combinePayload(nodes)
-    //nodes.foldLeft[Option[Payload]](None)((acc, c) => Some(c.payload + acc.orNull)).orNull
+  }
+
+  override def toString = {
+    val acc = new ArrayBuffer[String]
+    root.foreach((d, n) => acc += ("  " * d + n))
+    acc.mkString("\n")
   }
 }
+
+class EmptyNodeException extends Exception
 
 trait TreeStrategy2[P] {
   def split(nodes: Seq[_ <: WithPayload[P]]): Option[Seq[Seq[_ <: WithPayload[P]]]]
   def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]): Int
-  def combinePayload(nodes: Seq[_ <: WithPayload[P]]) : P
-  
+  def combinePayload(nodes: Seq[_ <: WithPayload[P]]): P
 }
+
 
 trait WithPayload[P] {
   def payload: P
@@ -52,7 +63,15 @@ abstract class Node2[P](val tree: Tree2[P], var children: Seq[_ <: WithPayload[P
   def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]]
 
   def payload: P = {
-    tree.combinePayload(children);    
+    tree.combinePayload(children);
+  }
+  
+  def foreach(f : (Int, WithPayload[P]) => Unit, depth : Int = 0) : Unit = {
+    f(depth, this)
+  }
+
+  override def toString = {
+    "* : " + payload.toString
   }
 }
 
@@ -61,6 +80,11 @@ class LeafNode[P](tree: Tree2[P], readyChildren: Seq[_ <: WithPayload[P]] = new 
   def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]] = {
     children = children :+ l
     tree.split(children)
+  }
+
+  override def foreach(f : (Int, WithPayload[P]) => Unit, depth : Int = 0) : Unit = {
+    super.foreach(f, depth)
+    children.foreach(f(depth + 1, _))
   }
 }
 
@@ -79,6 +103,13 @@ class ContainerNode2[P](tree: Tree2[P], readyChildren: Seq[_ <: WithPayload[P]] 
         tree.split(children)
       }
       case None => None
-    }    
+    }
+  }
+
+  override def foreach(f : (Int, WithPayload[P]) => Unit, depth : Int = 0) : Unit = {
+    super.foreach(f, depth)
+    children.foreach(_ match {
+      case n : Node2[P] => n.foreach(f, depth + 1)
+    })
   }
 }
