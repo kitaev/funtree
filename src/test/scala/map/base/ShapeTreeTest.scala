@@ -8,29 +8,29 @@ class ShapeTreeTest extends FlatSpec {
     override def toString = id + " : " + payload
     def computePayload() = payload
   }
-  
+
   object ShapeItem {
     var id = 0
-    
-    def apply(shape : Shape) = {
+
+    def apply(shape: Shape) = {
       id += 1
       new ShapeItem(id - 1, shape)
     }
   }
 
   class BinaryShapeTreeStrategy extends ShapeTreeStrategy {
-    
+
     def split(nodes: Seq[_ <: WithPayload[Shape]]) = {
       nodes.length match {
         case 3 => {
-	        val right: Seq[WithPayload[Shape]] = Array(nodes(0), nodes(1))
-	        val left: Seq[WithPayload[Shape]] = Array(nodes(2))
-	        Some(Array(left, right))
+          val right: Seq[WithPayload[Shape]] = Array(nodes(0), nodes(1))
+          val left: Seq[WithPayload[Shape]] = Array(nodes(2))
+          Some(Array(left, right))
         }
         case _ => None
       }
     }
-    
+
     def findTarget(payload: Shape, targets: Seq[_ <: WithPayload[Shape]]) = {
       targets.find(_.payload.contains(payload)) match {
         case Some(x) => targets.indexOf(x)
@@ -57,8 +57,9 @@ class ShapeTreeTest extends FlatSpec {
     val tree = new ShapeTree(new ShapeRTreeStrategy(10))
 
     for (x <- 0 to 100) {
-    	tree.insert(ShapeItem(Shape(x, x)));
+      tree.insert(ShapeItem(Shape(x, x)));
     }
+    println(tree)
     assert(tree.payload == Shape(0, 0, 100, 100))
   }
 
