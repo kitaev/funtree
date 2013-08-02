@@ -2,9 +2,8 @@ package rtree
 
 class Tree2 {
   var root: Node2 = new LeafNode(this)
-  val maxFill = 2;
 
-  def insert(leaf: Leaf2): Node2 = {
+  def insert(leaf: WithShape): Node2 = {
     root.insert(leaf) match {
       case Some(roots) => {
         val seq = Array(createNode(roots._1), createNode(roots._2))
@@ -16,7 +15,7 @@ class Tree2 {
   }
 
   def createNode(children: IndexedSeq[_ <: WithShape]): Node2 = {
-    if (children.isEmpty || children.forall(_.isInstanceOf[Leaf])) {
+    if (children.isEmpty || children.find(_.isInstanceOf[Node2]) == None) {
       new LeafNode(this, children)
     } else {
       new ContainerNode2(this, children)
@@ -36,12 +35,15 @@ trait WithShape {
   def shape: Shape
 }
 
-class Leaf2(val shape: Shape) extends WithShape
+class EmptyNodeException extends Exception
 
 abstract class Node2(val tree: Tree2, var children: IndexedSeq[_ <: WithShape] = new Array[WithShape](0)) extends WithShape {
   def insert(l: WithShape): Option[(IndexedSeq[_ <: WithShape], IndexedSeq[_ <: WithShape])]
 
   def shape: Shape = {
+    if (children.isEmpty) {
+      throw new EmptyNodeException
+    }
     children.foldLeft[Option[Shape]](None)((acc, c) => Some(c.shape + acc.orNull)).orNull
   }
 }
@@ -61,15 +63,15 @@ class ContainerNode2(tree: Tree2, readyChildren: IndexedSeq[_ <: WithShape] = ne
 
     val replacement = children(targetIndex) match {
       case n: Node2 => n.insert(l)
+      case _ => None
     }
-
     replacement match {
       case Some(x) => {
         val seq = Array(tree.createNode(x._1), tree.createNode(x._2))
         children = children.patch(targetIndex, seq, 1);
+        tree.split(children)
       }
-      case None =>
-    }
-    tree.split(children)
+      case None => None
+    }    
   }
 }
