@@ -1,7 +1,8 @@
 package rtree
 
 class Tree2 {
-  var root: Node2 = new LeafNode(this)
+  
+  var root: Node2 = createNode(new Array[WithShape](0))
 
   def insert(leaf: WithShape): Node2 = {
     root.insert(leaf) match {
