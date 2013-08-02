@@ -53,4 +53,13 @@ class ShapeTreeTest extends FlatSpec {
     assert(tree.payload == Shape(-1, 1, 2, -7))
   }
 
+  "ShapeTree" should "work with more number of nodes" in {
+    val tree = new ShapeTree(new ShapeRTreeStrategy(10))
+
+    for (x <- 0 to 100) {
+    	tree.insert(ShapeItem(Shape(x, x)));
+    }
+    assert(tree.payload == Shape(0, 0, 100, 100))
+  }
+
 }
