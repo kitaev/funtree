@@ -7,7 +7,7 @@ class Tree2 {
   def insert(leaf: WithShape): Node2 = {
     root.insert(leaf) match {
       case Some(roots) => {
-        val seq = Array(createNode(roots._1), createNode(roots._2))
+        val seq = roots.map(createNode(_))
         root = createNode(seq)
         root
       }
@@ -15,7 +15,7 @@ class Tree2 {
     }
   }
 
-  def createNode(children: IndexedSeq[_ <: WithShape]): Node2 = {
+  def createNode(children: Seq[_ <: WithShape]): Node2 = {
     if (children.isEmpty || children.find(_.isInstanceOf[Node2]) == None) {
       new LeafNode(this, children)
     } else {
@@ -23,11 +23,11 @@ class Tree2 {
     }
   }
 
-  def split(nodes: IndexedSeq[_ <: WithShape]): Option[(IndexedSeq[_ <: WithShape], IndexedSeq[_ <: WithShape])] = {
+  def split(nodes: Seq[_ <: WithShape]): Option[Seq[Seq[_ <: WithShape]]] = {
     None
   }
 
-  def findTarget(shape: Shape, targets: IndexedSeq[_ <: WithShape]): Int = {
+  def findTarget(shape: Shape, targets: Seq[_ <: WithShape]): Int = {
     0
   }
 }
@@ -38,8 +38,8 @@ trait WithShape {
 
 class EmptyNodeException extends Exception
 
-abstract class Node2(val tree: Tree2, var children: IndexedSeq[_ <: WithShape] = new Array[WithShape](0)) extends WithShape {
-  def insert(l: WithShape): Option[(IndexedSeq[_ <: WithShape], IndexedSeq[_ <: WithShape])]
+abstract class Node2(val tree: Tree2, var children: Seq[_ <: WithShape] = new Array[WithShape](0)) extends WithShape {
+  def insert(l: WithShape): Option[Seq[Seq[_ <: WithShape]]]
 
   def shape: Shape = {
     if (children.isEmpty) {
@@ -49,17 +49,17 @@ abstract class Node2(val tree: Tree2, var children: IndexedSeq[_ <: WithShape] =
   }
 }
 
-class LeafNode(tree: Tree2, readyChildren: IndexedSeq[_ <: WithShape] = new Array[WithShape](0)) extends Node2(tree, readyChildren) {
+class LeafNode(tree: Tree2, readyChildren: Seq[_ <: WithShape] = new Array[WithShape](0)) extends Node2(tree, readyChildren) {
 
-  def insert(l: WithShape): Option[(IndexedSeq[_ <: WithShape], IndexedSeq[_ <: WithShape])] = {
+  def insert(l: WithShape): Option[Seq[Seq[_ <: WithShape]]] = {
     children = children :+ l
     tree.split(children)
   }
 }
 
-class ContainerNode2(tree: Tree2, readyChildren: IndexedSeq[_ <: WithShape] = new Array[WithShape](0)) extends Node2(tree, readyChildren) {
+class ContainerNode2(tree: Tree2, readyChildren: Seq[_ <: WithShape] = new Array[WithShape](0)) extends Node2(tree, readyChildren) {
 
-  override def insert(l: WithShape): Option[(IndexedSeq[_ <: WithShape], IndexedSeq[_ <: WithShape])] = {
+  override def insert(l: WithShape): Option[Seq[Seq[_ <: WithShape]]] = {
     val targetIndex = tree.findTarget(l.shape, children)
 
     val replacement = children(targetIndex) match {
@@ -68,8 +68,7 @@ class ContainerNode2(tree: Tree2, readyChildren: IndexedSeq[_ <: WithShape] = ne
     }
     replacement match {
       case Some(x) => {
-        val seq = Array(tree.createNode(x._1), tree.createNode(x._2))
-        children = children.patch(targetIndex, seq, 1);
+        children = children.patch(targetIndex, x.map(tree.createNode(_)), 1);
         tree.split(children)
       }
       case None => None
