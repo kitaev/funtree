@@ -12,6 +12,14 @@ trait ShapeTreeStrategy extends TreeStrategy[Shape] {
     }
     nodes.foldLeft[Option[Shape]](None)((acc, c) => Some(c.payload + acc.orNull)).orNull
   }
+  
+  def contains(enclosing : Shape, enclosed : Shape) = {
+    enclosing.contains(enclosed)
+  }
+
+  def intersects(first : Shape, second: Shape) = {
+    first.intersects(second)
+  }
 }
 
 class ShapeRTreeStrategy(val maxFill: Int = 3) extends ShapeTreeStrategy {

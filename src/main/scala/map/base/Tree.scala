@@ -18,9 +18,13 @@ class Tree[P](val strategy: TreeStrategy[P]) extends TreeStrategy[P] {
     }
     root
   }
-  
-  def payload : P = root.payload
-  
+
+  def query(q: P): Seq[_ <: WithPayload[P]] = {
+    root.query(q)
+  }
+
+  def payload: P = root.payload
+
   def createNode(children: Seq[_ <: WithPayload[P]]): Node[P] = {
     if (children.isEmpty || children.find(_.isInstanceOf[Node[P]]) == None) {
       new LeafNode[P](this, children)
@@ -41,6 +45,14 @@ class Tree[P](val strategy: TreeStrategy[P]) extends TreeStrategy[P] {
     strategy.combinePayload(nodes)
   }
 
+  def contains(enclosing: P, enclosed: P): Boolean = {
+    strategy.contains(enclosing, enclosed)
+  }
+
+  def intersects(first: P, second: P): Boolean = {
+    strategy.intersects(first, second)
+  }
+
   override def toString = {
     val acc = new ArrayBuffer[String]
     root.foreach((d, n) => acc += ("  " * d + n))
@@ -54,12 +66,15 @@ trait TreeStrategy[P] {
   def split(nodes: Seq[_ <: WithPayload[P]]): Option[Seq[Seq[_ <: WithPayload[P]]]]
   def findTarget(payload: P, targets: Seq[_ <: WithPayload[P]]): Int
   def combinePayload(nodes: Seq[_ <: WithPayload[P]]): P
+
+  def contains(enclosing: P, enclosed: P): Boolean
+  def intersects(first: P, second: P): Boolean
 }
 
 trait WithPayload[P] {
-  var cachedPayload : Option[P] = None
-  
-  def computePayload() : P
+  var cachedPayload: Option[P] = None
+
+  def computePayload(): P
 
   def payload: P = {
     if (cachedPayload == None) {
@@ -67,21 +82,21 @@ trait WithPayload[P] {
     }
     cachedPayload.get
   }
-  
+
   protected def dropCache() = cachedPayload = None
 }
 
 abstract class Node[P](val tree: Tree[P], var children: Seq[_ <: WithPayload[P]] = new Array[WithPayload[P]](0)) extends WithPayload[P] {
   def insert(l: WithPayload[P]): Option[Seq[Seq[_ <: WithPayload[P]]]]
+  def query(q: P): Seq[_ <: WithPayload[P]]
 
   def computePayload: P = {
     tree.combinePayload(children);
   }
-  
-  def foreach(f : (Int, WithPayload[P]) => Unit, depth : Int = 0) : Unit = {
+
+  def foreach(f: (Int, WithPayload[P]) => Unit, depth: Int = 0): Unit = {
     f(depth, this)
   }
-
   override def toString = {
     "* : " + payload.toString
   }
@@ -95,9 +110,17 @@ class LeafNode[P](tree: Tree[P], readyChildren: Seq[_ <: WithPayload[P]] = new A
     tree.split(children)
   }
 
-  override def foreach(f : (Int, WithPayload[P]) => Unit, depth : Int = 0) : Unit = {
+  override def foreach(f: (Int, WithPayload[P]) => Unit, depth: Int = 0): Unit = {
     super.foreach(f, depth)
     children.foreach(f(depth + 1, _))
+  }
+
+  def query(q: P): Seq[_ <: WithPayload[P]] = {
+    if (tree.intersects(q, payload)) {
+      children.filter(child => tree.contains(q, child.payload))
+    } else {
+      Nil
+    }
   }
 }
 
@@ -120,10 +143,28 @@ class ContainerNode[P](tree: Tree[P], readyChildren: Seq[_ <: WithPayload[P]] = 
     }
   }
 
-  override def foreach(f : (Int, WithPayload[P]) => Unit, depth : Int = 0) : Unit = {
+  override def foreach(f: (Int, WithPayload[P]) => Unit, depth: Int = 0): Unit = {
     super.foreach(f, depth)
     children.foreach(_ match {
-      case n : Node[P] => n.foreach(f, depth + 1)
+      case n: Node[P] => n.foreach(f, depth + 1)
     })
   }
+
+  def query(q: P) = {
+    if (tree.contains(q, this.payload)) {
+      val acc = new ArrayBuffer[WithPayload[P]]()
+      foreach((d, child) => {
+        child match {
+          case n :Node[P] => 
+          case _ => acc += child 
+        }
+      })
+      acc
+    } else if (tree.intersects(q, this.payload)) {
+      children.foldLeft[Seq[WithPayload[P]]](Nil)((b, a) => b ++ a.asInstanceOf[Node[P]].query(q))
+    } else {
+      Nil
+    }
+  }
+
 }
