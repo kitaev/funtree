@@ -1,11 +1,11 @@
 package map.base
 
 object Shape {
-  def apply(x : Double, y : Double) : Shape = {
+  def apply(x: Double, y: Double): Shape = {
     Point(x, y)
   }
 
-  def apply(x : Double, y : Double, x1 : Double, y1 : Double) : Shape = {
+  def apply(x: Double, y: Double, x1: Double, y1: Double): Shape = {
     Rect(x, y, x1, y1)
   }
 }
@@ -13,6 +13,14 @@ object Shape {
 abstract class Shape {
 
   def contains(that: Shape): Boolean
+
+  def intersects(that: Shape): Boolean = {
+    if (that == null) {
+      false
+    } else {
+      (this contains that) || (that contains this)
+    }
+  }
 
   def +(that: Shape): Shape = {
     if (that == null || (this contains that)) {
@@ -25,8 +33,8 @@ abstract class Shape {
   }
 
   def expand(that: Shape): Shape
-  
-  def area : Double
+
+  def area: Double
 }
 
 object Point {
@@ -41,13 +49,13 @@ class Point(val x: Double = 0, val y: Double = 0) extends Shape {
     that == this
   }
 
-  def expand(that: Shape) : Shape = {
+  def expand(that: Shape): Shape = {
     that match {
       case p: Point => Rect(this, p)
       case r: Rect => r.expand(this)
     }
   }
-  
+
   def area = 0.0
 
   override def equals(that: Any) = {
@@ -71,16 +79,32 @@ object Rect {
   }
 }
 
-class Rect(p0 : Point, p1 : Point) extends Shape {
-  
-  val topleft : Point = Point(p0.x.min(p1.x), p0.y.max(p1.y))
-  val bottomright : Point = Point(p0.x.max(p1.x), p0.y.min(p1.y))  
+class Rect(p0: Point, p1: Point) extends Shape {
+
+  val topleft: Point = Point(p0.x.min(p1.x), p0.y.max(p1.y))
+  val bottomright: Point = Point(p0.x.max(p1.x), p0.y.min(p1.y))
 
   def contains(that: Shape) = {
     that match {
       case r: Rect => contains(r.topleft) && contains(r.bottomright)
-      case p: Point => p.x >= topleft.x && p.x <= bottomright.x && p.y <= topleft.y && p.y >= bottomright.y 
+      case p: Point => p.x >= topleft.x && p.x <= bottomright.x && p.y <= topleft.y && p.y >= bottomright.y
       case _ => false
+    }
+  }
+
+  override def intersects(that: Shape) = {
+    if (super.intersects(that)) {
+      true
+    } else {
+      that match {
+        case r: Rect => {
+          !(r.topleft.x > bottomright.x ||
+            r.bottomright.x < topleft.x ||
+            r.topleft.y < bottomright.y ||
+            r.bottomright.y > topleft.y)
+        }
+        case _ => false
+      }
     }
   }
 
@@ -91,7 +115,7 @@ class Rect(p0 : Point, p1 : Point) extends Shape {
     }
   }
 
-  def area = {((bottomright.x - topleft.x) * (topleft.y - bottomright.y)).abs}
+  def area = { ((bottomright.x - topleft.x) * (topleft.y - bottomright.y)).abs }
 
   override def equals(that: Any) = {
     that match {
