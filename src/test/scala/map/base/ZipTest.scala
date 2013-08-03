@@ -4,19 +4,6 @@ import org.scalatest.FlatSpec
 import scala.io.Source
 
 class ZipTest extends FlatSpec {
-  class ShapeItem(val id: Long, override val payload: Shape) extends WithPayload[Shape] {
-    override def toString = id + " : " + payload
-    def computePayload() = payload
-  }
-
-  object ShapeItem {
-    var id = 0
-
-    def apply(shape: Shape) = {
-      id += 1
-      new ShapeItem(id - 1, shape)
-    }
-  }
   
   def loadZipTree(resource : String, maxFill : Int) : ShapeTree = {
     val tree = new ShapeTree(new ShapeRTreeStrategy(maxFill))
@@ -26,7 +13,7 @@ class ZipTest extends FlatSpec {
       val values = line.split('\t')
       val lat = values(9).toDouble
       val lon = values(10).toDouble
-      tree.insert(ShapeItem(Shape(lat, lon)))
+      tree.insert(ShapeTestItem(Shape(lat, lon)))
     }
     tree
   }
