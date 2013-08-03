@@ -29,8 +29,8 @@ class ShapeRTreeStrategy(val maxFill: Int = 3) extends ShapeTreeStrategy {
       val ((minLeft, someRight), index0) = associations.minBy(_._1._1)
       val ((someLeft, minRight), index1) = associations.minBy(_._1._2)
 
-      val index = if (minLeft < minRight) { index0 } else { index1 }
       val group = if (minLeft < minRight) { left } else { right }
+      val index = if (minLeft < minRight) { index0 } else { index1 }
 
       group += nodes(index)
 

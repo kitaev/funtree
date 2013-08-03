@@ -5,12 +5,14 @@ import scala.collection.mutable.ArrayBuffer
 class Tree[P](val strategy: TreeStrategy[P]) extends TreeStrategy[P] {
 
   var root: Node[P] = createNode(new Array[WithPayload[P]](0))
+  var depth = 1
 
   def insert(leaf: WithPayload[P]): Node[P] = {
     root.insert(leaf) match {
       case Some(roots) => {
         val seq = roots.map(createNode(_))
         root = createNode(seq)
+        depth += 1
       }
       case None =>
     }
@@ -18,7 +20,7 @@ class Tree[P](val strategy: TreeStrategy[P]) extends TreeStrategy[P] {
   }
   
   def payload : P = root.payload
-
+  
   def createNode(children: Seq[_ <: WithPayload[P]]): Node[P] = {
     if (children.isEmpty || children.find(_.isInstanceOf[Node[P]]) == None) {
       new LeafNode[P](this, children)
